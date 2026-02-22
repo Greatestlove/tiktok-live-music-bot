@@ -9,7 +9,6 @@ const app = express();
 const server = http.createServer(app);
 const io = new Server(server);
 
-// --- 전역 변수 ---
 let songQueue = [];
 let isPlaying = false;
 let tiktokConnection = null;
@@ -18,28 +17,32 @@ app.get('/', (req, res) => {
     res.sendFile(path.join(__dirname, 'index.html'));
 });
 
-// [함수] 모든 상태를 초기화하는 함수
+// 시스템 초기화 함수
 function resetSystem() {
-    console.log('시스템 초기화: 대기열 및 재생 상태를 비웁니다.');
+    console.log('시스템 초기화 실행');
     songQueue = [];
     isPlaying = false;
+
     if (tiktokConnection) {
-        try { tiktokConnection.disconnect(); } catch (e) { }
+        // 기존에 등록된 모든 이벤트 리스너를 제거하여 중복 실행 방지
+        tiktokConnection.removeAllListeners();
+        try {
+            tiktokConnection.disconnect();
+        } catch (e) {
+            console.error("연결 종료 중 오류:", e);
+        }
         tiktokConnection = null;
     }
-    // 클라이언트들에게도 초기화 상태 알림
+
     io.emit('updateQueue', songQueue);
     io.emit('noMoreSongs');
 }
 
 io.on('connection', (socket) => {
-    console.log('브라우저 연결됨');
-
-    // [추가] 새로고침 대응: 페이지가 새로 연결되면 일단 서버 상태 초기화
-    resetSystem();
+    console.log('새로운 브라우저 연결됨');
 
     socket.on('connect-tiktok', (username) => {
-        // [추가] 버튼을 다시 누를 경우 기존 상태 완전히 초기화
+        // [중요] 새로운 연결 시도 전 무조건 초기화
         resetSystem();
 
         let isAcceptingRequests = false;
@@ -59,23 +62,37 @@ io.on('connection', (socket) => {
                 socket.emit('connection-error', '방송 연결 실패');
             });
 
+        // [핵심] 리스너를 등록하기 전에 혹시나 있을 중복 리스너 제거
+        tiktokConnection.removeAllListeners('chat');
+
         tiktokConnection.on('chat', async (data) => {
             if (!isAcceptingRequests) return;
 
+            // 신청곡 명령어 확인
             if (data.comment.startsWith('!신청곡')) {
                 const query = data.comment.replace('!신청곡', '').trim();
                 if (!query) return;
+
+                console.log(`신청곡 감지: ${query}`);
 
                 try {
                     const searchResult = await yts(query);
                     const video = searchResult.videos[0];
 
                     if (video) {
+                        // 중복 곡 방지 로직 (선택 사항: 동일한 영상 ID가 대기열에 있는지 확인)
+                        const isDuplicate = songQueue.some(s => s.videoId === video.videoId);
+                        if (isDuplicate) {
+                            console.log("이미 대기열에 있는 곡입니다.");
+                            return;
+                        }
+
                         const songData = {
                             title: video.title,
                             videoId: video.videoId,
                             requestedBy: data.nickname
                         };
+
                         songQueue.push(songData);
                         io.emit('updateQueue', songQueue);
 
@@ -107,7 +124,8 @@ function playNext() {
     }
 }
 
+// Render 배포 시 포트 설정 (Render는 환경변수 PORT를 사용함)
 const PORT = process.env.PORT || 3000;
 server.listen(PORT, () => {
-    console.log(`서버 실행: http://localhost:${PORT}`);
+    console.log(`서버가 포트 ${PORT}에서 작동 중입니다.`);
 });
