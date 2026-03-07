@@ -321,12 +321,13 @@
 
         // 3. 소켓 이벤트 리스너
         socket.on('connection-success', (data) => {
-            document.getElementById('status').innerText = `✅ ${data.username}님 방송 연결 성공! (곧 접수를 시작합니다)`;
+            const displayName = data.hostNickname || data.username;
+            document.getElementById('status').innerText = `✅ ${displayName}님 방송 연결 성공! (곧 접수를 시작합니다)`;
             document.getElementById('status').style.color = '#4CAF50';
 
             // 채팅창 활성화 및 초기화
             document.getElementById('chat-section').style.display = 'flex';
-            document.getElementById('chat-status').innerText = `${data.username} 연결됨`;
+            document.getElementById('chat-status').innerText = `${displayName} 연결됨`;
             document.getElementById('chat-status').style.color = '#4CAF50';
             document.getElementById('chat-list').innerHTML = '<div style="padding:20px; text-align:center; color:#666;" id="chat-placeholder">새로운 채팅을 기다리는 중...</div>';
         });
