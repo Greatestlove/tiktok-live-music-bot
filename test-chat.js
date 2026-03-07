@@ -2,7 +2,7 @@ const { WebcastPushConnection } = require('tiktok-live-connector');
 
 // 1. 테스트할 틱톡 아이디 입력 (현재 라이브 중인 아무 유명인의 아이디로 테스트 가능)
 // 예: '원정맨'이나 현재 라이브 탭에 떠 있는 아이디를 넣어보세요.
-const TIKTOK_USERNAME = 'haneull0w0';
+const TIKTOK_USERNAME = '';
 
 // 2. 연결 설정
 let tiktokLiveConnection = new WebcastPushConnection(TIKTOK_USERNAME);
