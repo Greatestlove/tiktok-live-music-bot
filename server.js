@@ -66,6 +66,12 @@ io.on('connection', (socket) => {
         tiktokConnection.removeAllListeners('chat');
 
         tiktokConnection.on('chat', async (data) => {
+            // 모든 채팅 소켓으로 전송 (UI 표시용)
+            io.emit('chatMessage', {
+                nickname: data.nickname,
+                comment: data.comment
+            });
+
             if (!isAcceptingRequests) return;
 
             // 신청곡 명령어 확인
