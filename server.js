@@ -75,8 +75,8 @@ io.on('connection', (socket) => {
             if (!isAcceptingRequests) return;
 
             // 신청곡 명령어 확인
-            if (data.comment.startsWith('!')) {
-                const query = data.comment.replace('!', '').trim();
+            if (data.comment.startsWith('ㅋ')) {
+                const query = data.comment.replace('ㅋ', '').trim();
                 if (!query) return;
 
                 console.log(`신청곡 감지: ${query}`);
