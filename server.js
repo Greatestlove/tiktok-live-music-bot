@@ -50,8 +50,16 @@ io.on('connection', (socket) => {
 
         tiktokConnection.connect()
             .then(state => {
-                console.log(`[${username}] 연결 성공`);
-                socket.emit('connection-success', { username });
+                let hostNickname = username;
+                if (state.roomInfo) {
+                    if (state.roomInfo.owner && state.roomInfo.owner.nickname) {
+                        hostNickname = state.roomInfo.owner.nickname;
+                    } else if (state.roomInfo.data && state.roomInfo.data.owner && state.roomInfo.data.owner.nickname) {
+                        hostNickname = state.roomInfo.data.owner.nickname;
+                    }
+                }
+                console.log(`[${hostNickname}] 연결 성공`);
+                socket.emit('connection-success', { username, hostNickname });
 
                 setTimeout(() => {
                     isAcceptingRequests = true;
